@@ -3,8 +3,8 @@ CFLAGS ?= -O2 -Wall
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
 
-TARGET = testdisk
-SRC = testdisk.c
+TARGET = diskroaster
+SRC = diskroaster.c
 LIBS = -lpthread
 all: $(TARGET)
 
