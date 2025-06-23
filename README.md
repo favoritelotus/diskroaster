@@ -19,20 +19,20 @@ Usage
 
 Example:
 
-    ./testdisk -w 8 -b 32m -z /dev/sdd
+    testdisk -w 8 -b 32m -z /dev/sdd
 
 This runs 8 parallel workers, writes 32MB blocks of zeros to /dev/sdd, and verifies them.
 
 Options
 -------
-
-  -h              Print help and exit
-  -w <workers>    Number of parallel worker threads (default: 4)
-  -n <passes>     Number of write+verify passes to perform (default: 1)
-  -b <blocksize>  Block size for write operations (default: 4096).
-                  Supports k or m suffixes (e.g., 64k, 1m, 32m)
-  -z              Write zero-filled blocks instead of random data
-
+```
+  -h              Print help and exit  
+  -w <workers>    Number of parallel worker threads (default: 4)  
+  -n <passes>     Number of write+verify passes to perform (default: 1)  
+  -b <blocksize>  Block size for write operations (default: 4096)    
+                  Supports k or m suffixes (e.g., 64k, 1m, 32m)  
+  -z              Write zero-filled blocks instead of random data  
+```
 Warnings
 --------
 
@@ -48,8 +48,8 @@ Each worker writes to its own section of the disk. After writing, it reads back 
 Building
 --------
 
-To build and instal:
-make && make install
+To build and instal:  
+`make && make install`
 
 Tested on Linux and FreeBSD using standard POSIX make.
 
