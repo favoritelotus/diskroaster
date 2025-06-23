@@ -9,7 +9,7 @@ LIBS = -lpthread
 all: $(TARGET)
 
 $(TARGET): $(SRC)
-	$(CC) $(CFLAGS) $(LIBS) -o $@ $^
+	$(CC) $(CFLAGS) -o $@ $(SRC) $(LIBS)
 
 install: $(TARGET)
 	mkdir -p $(DESTDIR)$(BINDIR)
