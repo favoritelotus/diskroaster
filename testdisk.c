@@ -34,7 +34,7 @@
 #include <pthread.h>
 #include <signal.h>
 
-#define PROGNAME "testdisk"
+#define PROGNAME "diskroaster"
 #define MIN_BLOCK_SIZE 512
 #define DEFAULT_BLOCK_SIZE 4096
 #define DEFAULT_NUM_WORKERS 4
