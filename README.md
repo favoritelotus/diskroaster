@@ -1,7 +1,7 @@
-testdisk
+diskroaster
 =========
 
-testdisk is a multithreaded disk testing utility that writes and verifies data on a raw disk device. It is designed to stress-test hard drives and SSDs by dividing the disk into sections, writing data in parallel using multiple worker threads, and verifying the written content for integrity.
+diskroaster is a multithreaded disk testing utility that writes and verifies data on a raw disk device. It is designed to stress-test hard drives and SSDs by dividing the disk into sections, writing data in parallel using multiple worker threads, and verifying the written content for integrity.
 
 Features
 --------
@@ -15,11 +15,11 @@ Features
 Usage
 -----
 
-    testdisk [OPTIONS] DISK
+    diskroaster [OPTIONS] DISK
 
 Example:
 
-    testdisk -w 8 -b 32m -z /dev/sdd
+    diskroaster -w 8 -b 32m -z /dev/sdd
 
 This runs 8 parallel workers, writes 32MB blocks of zeros to /dev/sdd, and verifies them.
 
