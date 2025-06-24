@@ -8,3 +8,7 @@
 - Displays live progress in MB and percentage.
 - Cross-platform support for Linux and FreeBSD.
 - Clean exit and signal handling (SIGINT).
+
+## [1.1.0] - 2025-06-24
+### Added
+- Direct I/O support to access devices without using the system cache.

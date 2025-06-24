@@ -24,6 +24,11 @@
  * OF SUCH DAMAGE.
  */
 
+// Linux open() syscall's O_DIRECT flag requires to define _GNU_SOURCE   
+#if defined(__linux__)
+	#define _GNU_SOURCE
+#endif
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -35,6 +40,7 @@
 #include <signal.h>
 
 #define PROGNAME "diskroaster"
+#define PROG_VERSION "1.1.0"
 #define MIN_BLOCK_SIZE 512
 #define DEFAULT_BLOCK_SIZE 4096
 #define DEFAULT_NUM_WORKERS 4
@@ -96,8 +102,9 @@ void cleanup_resources(void)
 void usage(void)
 {
         char *usage = 
-		"Usage: " PROGNAME " [OPTIONS] DISK\n\n"
-		" The options are as follows:\n"
+		PROGNAME " - Multi-threaded disk testing utility, v" PROG_VERSION "\n\n"
+		"Usage: " PROGNAME " [OPTIONS] DEVICE\n\n"
+		"Options:\n"
 		"  -h			- Print help and exit\n"
 		"  -w <workers>		- Number of parallel worker threads (default: 4)\n"
 		"  -n <passes>		- Number of write+verify passes to perform (default: 1)\n"
@@ -148,7 +155,6 @@ int get_size_in_bytes(const char *str_unit)
 
 	return unit;
 }
-	
 
 off_t get_disk_size(const char* device_name)
 {
@@ -181,6 +187,7 @@ void *worker(void *worker_params)
 	int blocksize = params->blocksize;
 	off_t offset = params->offset;
 	off_t num_blocks = params->num_blocks;
+	off_t current_offset;
 	ssize_t written_bytes;
 	char *buffer = NULL;
 
@@ -189,7 +196,12 @@ void *worker(void *worker_params)
                 exit(EXIT_FAILURE);
         }
 
-	if ((fd = open(params->device_name, O_RDWR)) == -1) {
+	if (posix_memalign((void**)&buffer, MIN_BLOCK_SIZE, blocksize)  != 0) {
+                perror("posix_memalign()");
+                exit(EXIT_FAILURE);
+        }
+
+	if ((fd = open(params->device_name, O_RDWR|O_DIRECT)) == -1) {
                 perror("open()");
                 exit(EXIT_FAILURE);
         }
@@ -203,6 +215,7 @@ void *worker(void *worker_params)
                 exit(EXIT_FAILURE);
         }
 
+	current_offset = offset;
 	for (block_counter = 0; block_counter <= num_blocks; block_counter++) {
                 if (verified_bytes > disk_size) {
 			verified_bytes = disk_size;
@@ -228,12 +241,14 @@ void *worker(void *worker_params)
                 }
 
 		if (memcmp(params->wr_data, buffer, written_bytes) != 0) {
-			fprintf(stderr, "Error verifying block:\n");
+			fprintf(stderr, "Error verifying block at offset #: %ld\n", current_offset);
 		}
    
 		pthread_mutex_lock(&mutex_verified_bytes);
         	verified_bytes += written_bytes;
         	pthread_mutex_unlock(&mutex_verified_bytes);
+
+		current_offset += written_bytes;
 	}
 		
 	free(buffer);
@@ -260,7 +275,7 @@ int main(int argc, char **argv)
 	struct stat st;
 	mode_t device_type;
 
-	while ((opt = getopt(argc, argv, "b:w:n:z")) != -1) {
+	while ((opt = getopt(argc, argv, "b:w:n:zh")) != -1) {
 
 		switch (opt) {
 			case 'b':
@@ -327,6 +342,12 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
+	if (posix_memalign((void**)&wr_data, MIN_BLOCK_SIZE, blocksize)  != 0) {
+		perror("posix_memalign()");
+                cleanup_resources();
+                exit(EXIT_FAILURE);
+        }
+
         (write_zeros)? memset(wr_data, 0, blocksize) : fill_rand_data(wr_data, blocksize);
 
 	disk_size = get_disk_size(device_name);
@@ -389,11 +410,11 @@ int main(int argc, char **argv)
 		}
 
 		while (workers_run) {
- 
-                        fprintf(stderr, "\033[2K\rPasses: %d/%d, verified: %ldMB, completed: %ld%%\r",
-                                        pass, num_passes, (verified_bytes / 1024 / 1024),
-                                        (verified_bytes * 100) / disk_size); 
-
+                        fprintf(stderr, "\033[2K\rpass: %d/%d, verified: %ld MB, completed: %ld%%\r",
+                                        pass, 
+                                        num_passes, 
+                                        (verified_bytes / 1024 / 1024),
+                                        (verified_bytes * 100) / disk_size);
 			sleep(1);
 		}
 
