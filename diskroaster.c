@@ -36,8 +36,15 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/ioctl.h>
 #include <pthread.h>
 #include <signal.h>
+
+#if defined(__linux__)
+	#include <linux/fs.h>
+#elif defined(__FreeBSD__)
+	#include <sys/disk.h>
+#endif
 
 #define PROGNAME "diskroaster"
 #define PROG_VERSION "1.1.0"
@@ -67,6 +74,7 @@ off_t disk_size;
 int pass;
 int terminate;
 int write_zeros;
+int sector_size;
 volatile int workers_run;
 
 char *device_name = NULL;
@@ -178,6 +186,29 @@ off_t get_disk_size(const char* device_name)
 	return disk_size;
 }
 
+unsigned int get_disk_sector_size(const char* device_name)
+{
+        int fd;
+	unsigned int sector_size;
+ 
+        if ((fd = open(device_name, O_RDONLY)) == -1) {
+                perror("open()");
+                exit(EXIT_FAILURE);
+        }
+
+
+#if defined(__linux__)
+	if (ioctl(fd, BLKSSZGET, &sector_size) == -1) {
+#elif defined(__FreeBSD__)
+	if (ioctl(fd, DIOCGSECTORSIZE, &sector_size) == -1) {
+#endif
+		perror("ioctl()");
+                exit(EXIT_FAILURE);
+	}
+	
+	return sector_size;
+}
+
 void *worker(void *worker_params)
 {
 	struct worker_params_t *params = (struct worker_params_t*) worker_params;
@@ -191,13 +222,8 @@ void *worker(void *worker_params)
 	ssize_t written_bytes;
 	char *buffer = NULL;
 
-	if ((buffer = malloc(blocksize)) == NULL) {
-                fprintf(stderr, "%s\n", "No free memory to allocate.");
-                exit(EXIT_FAILURE);
-        }
-
-	if (posix_memalign((void**)&buffer, MIN_BLOCK_SIZE, blocksize)  != 0) {
-                perror("posix_memalign()");
+	if (posix_memalign((void**)&buffer, sector_size, blocksize)  != 0) {
+		fprintf(stderr, "%s\n", "No free memory to allocate.");
                 exit(EXIT_FAILURE);
         }
 
@@ -283,11 +309,6 @@ int main(int argc, char **argv)
 				if (blocksize < 0) {
 					fprintf(stderr, "%s\n", "Unknown unit suffix");
                         		exit(EXIT_FAILURE);
-				} else if (blocksize < MIN_BLOCK_SIZE) {
-					fprintf(stderr, "%s %d bytes.\n", 
-                                                        "The block size must be at least", 
-                                                        MIN_BLOCK_SIZE); 
-					exit(EXIT_FAILURE); 
 				} else if (blocksize % MIN_BLOCK_SIZE != 0) {
                                         fprintf(stderr, "The block size must be a power of two.\n");
                                         exit(EXIT_FAILURE);
@@ -336,14 +357,16 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if ((wr_data = malloc(blocksize)) == NULL) {
-		fprintf(stderr, "%s\n", "No free memory to allocate.");
-		cleanup_resources();
+	sector_size = get_disk_sector_size(device_name);
+
+	if (blocksize < sector_size) {
+		fprintf(stderr, "The block size can't be less than the disk sector size (%u).\n",
+				sector_size);
 		exit(EXIT_FAILURE);
 	}
 
-	if (posix_memalign((void**)&wr_data, MIN_BLOCK_SIZE, blocksize)  != 0) {
-		perror("posix_memalign()");
+	if (posix_memalign((void**)&wr_data, sector_size, blocksize)  != 0) {
+		fprintf(stderr, "%s\n", "No free memory to allocate.");
                 cleanup_resources();
                 exit(EXIT_FAILURE);
         }
