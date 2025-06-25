@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025, Pavel Golubinsky
+ * Copyright (c) 2025, Pavel Golubinskiy
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without modification,

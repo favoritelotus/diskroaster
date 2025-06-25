@@ -52,7 +52,7 @@ Each worker writes to its own section of the disk. After writing, it reads back 
 Building
 --------
 
-To build and instal:  
+To build and install:  
 `make && make install`
 
 Tested on Linux and FreeBSD using standard POSIX make.
@@ -60,4 +60,4 @@ Tested on Linux and FreeBSD using standard POSIX make.
 Author
 ------
 
-Pavel Golubinsky  
+Pavel Golubinskiy  

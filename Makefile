@@ -14,10 +14,11 @@ $(TARGET): $(SRC)
 install: $(TARGET)
 	mkdir -p $(DESTDIR)$(BINDIR)
 	install -m 0755 $(TARGET) $(DESTDIR)$(BINDIR)
-	@echo "Installed $(TARGET) to $(DESTDIR)$(BINDIR)"
+	sh ./man/install_man_page.sh
 
 uninstall:
 	rm -f $(DESTDIR)$(BINDIR)/$(TARGET)
+	sh ./man/uninstall_man_page.sh
 
 clean:
 	rm -f $(TARGET)
