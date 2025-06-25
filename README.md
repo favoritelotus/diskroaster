@@ -38,6 +38,10 @@ Warnings
 
 - This tool overwrites all data on the specified disk!
 - Be absolutely sure the target (e.g., /dev/sdd) is not your system or a mounted disk.
+- diskroaster allocates one memory buffer per worker thread.  Total memory usage is approximately:
+`memory_used = num_workers × block_size`.
+Using a large number of workers with a large block size can lead to high memory consumption and potentially cause the system to run out of memory (OOM).
+Ensure your system has enough free RAM before running with aggressive settings like `-w 64 -b 64m`.
 - You must run this as root to access raw devices.
 
 Output & Verification
