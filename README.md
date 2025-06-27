@@ -53,7 +53,10 @@ Building
 --------
 
 To build and install:  
-`make && make install`
+`git clone https://github.com/favoritelotus/diskroaster.git`  
+`cd diskroaster`   
+`make`  
+`make install`
 
 Tested on Linux and FreeBSD using standard POSIX make.
 
