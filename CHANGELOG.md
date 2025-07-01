@@ -12,4 +12,8 @@
 ## [1.1.0] - 2025-06-24
 ### Added
 - Direct I/O support to access devices without using the system cache.
-- Detection of disk logical sector size. 
+- Detection of disk logical sector size.
+
+## [1.1.1] - 2025-07-01
+### Fixed
+- Fixed calculation of verified bytes and percentage.

@@ -39,6 +39,7 @@
 #include <sys/ioctl.h>
 #include <pthread.h>
 #include <signal.h>
+#include <errno.h>
 
 #if defined(__linux__)
 	#include <linux/fs.h>
@@ -47,7 +48,7 @@
 #endif
 
 #define PROGNAME "diskroaster"
-#define PROG_VERSION "1.1.0"
+#define PROG_VERSION "1.1.1"
 #define MIN_BLOCK_SIZE 512
 #define DEFAULT_BLOCK_SIZE 4096
 #define DEFAULT_NUM_WORKERS 4
@@ -58,6 +59,7 @@ typedef struct worker_params_t {
         char *wr_data;
         volatile off_t offset;
         off_t num_blocks;
+	off_t disk_size;
         int blocksize;
 } worker_params_t;
 
@@ -70,7 +72,6 @@ pthread_attr_t tattr;
 int blocksize = DEFAULT_BLOCK_SIZE;
 int num_workers = DEFAULT_NUM_WORKERS;
 int num_passes = DEFAULT_NUM_PASSES;
-off_t disk_size;
 int pass;
 int terminate;
 int write_zeros;
@@ -81,7 +82,7 @@ char *device_name = NULL;
 char *wr_data = NULL;
 worker_params_t *worker_params = NULL;
 
-off_t verified_bytes;
+volatile off_t verified_bytes;
 
 void handle_sigint(int sig) 
 {
@@ -214,10 +215,10 @@ void *worker(void *worker_params)
 	struct worker_params_t *params = (struct worker_params_t*) worker_params;
 	int fd;
 	int block_counter;
-	int remainder;
 	int blocksize = params->blocksize;
 	off_t offset = params->offset;
 	off_t num_blocks = params->num_blocks;
+	off_t disk_size = params->disk_size;
 	off_t current_offset;
 	ssize_t written_bytes;
 	char *buffer = NULL;
@@ -232,17 +233,13 @@ void *worker(void *worker_params)
                 exit(EXIT_FAILURE);
         }
 
-	// Align offset.
-	remainder = offset % blocksize;
-	offset -= remainder;
-
 	if (lseek(fd, offset, SEEK_SET) == -1) {
                 perror("lseek()");
                 exit(EXIT_FAILURE);
         }
 
 	current_offset = offset;
-	for (block_counter = 0; block_counter <= num_blocks; block_counter++) {
+	for (block_counter = 0; block_counter < num_blocks; block_counter++) {
                 if (verified_bytes > disk_size) {
 			verified_bytes = disk_size;
                 	break;
@@ -251,8 +248,12 @@ void *worker(void *worker_params)
 		written_bytes = write(fd, params->wr_data, blocksize);
 
 		if (written_bytes == -1) {
-			perror("write()");
-                	exit(EXIT_FAILURE);
+			if (errno == ENOSPC) {
+				break;
+			} else {
+				perror("write()");
+                		exit(EXIT_FAILURE);
+			}
         	}
 
 		// Read back the written block.
@@ -280,6 +281,9 @@ void *worker(void *worker_params)
 	free(buffer);
 	close(fd);
 
+	// Pause briefly to allow verified_bytes to stabilize
+	sleep(3);
+
 	pthread_mutex_lock(&mutex_workers_run);
 	workers_run--;
 	pthread_mutex_unlock(&mutex_workers_run);
@@ -297,6 +301,8 @@ int main(int argc, char **argv)
 	off_t disk_segment_size;
 	off_t num_blocks;
 	off_t offset;
+	off_t disk_size;
+	int remainder;
 
 	struct stat st;
 	mode_t device_type;
@@ -376,6 +382,15 @@ int main(int argc, char **argv)
 	disk_size = get_disk_size(device_name);
 	
 	disk_segment_size = disk_size / num_workers;
+
+	// Calculate misalignment to align disk_segment_size to blocksize.
+        remainder = disk_segment_size % blocksize;
+	
+        if (remainder > 0 ) {
+		disk_segment_size -= remainder;
+		disk_segment_size += blocksize;
+	}
+
 	num_blocks = disk_segment_size / blocksize;
 
 	workers_id = malloc(num_workers * sizeof(pthread_t));
@@ -421,6 +436,7 @@ int main(int argc, char **argv)
 			worker_params[worker_counter].num_blocks = num_blocks;
 			worker_params[worker_counter].blocksize = blocksize;
 			worker_params[worker_counter].offset = offset;
+			worker_params[worker_counter].disk_size = disk_size;
 		
 			ret = pthread_create(&workers_id[worker_counter], &tattr, worker, &worker_params[worker_counter]);
 			if (ret != 0) {
