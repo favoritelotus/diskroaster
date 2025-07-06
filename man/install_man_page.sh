@@ -1,15 +1,15 @@
 #!/bin/sh
 
+install -d /usr/local/share/man/man8
+
 if [ $OSTYPE = "FreeBSD" ]
 then
-	install -d /usr/local/man/man1
-	cp ./man/diskroaster.1.freebsd /usr/local/man/man1/diskroaster.1
-	gzip -f /usr/local/man/man1/diskroaster.1
+	cp ./man/diskroaster.8.freebsd /usr/local/share/man/man8/diskroaster.8
+	gzip -f /usr/local/share/man/man8/diskroaster.8
 elif [ $OSTYPE = "linux-gnu" ]
 then
-	install -d /usr/local/share/man/man1
-	cp ./man/diskroaster.1.linux /usr/local/share/man/man1/diskroaster.1
-	gzip -f /usr/local/share/man/man1/diskroaster.1
+	cp ./man/diskroaster.8.linux /usr/local/share/man/man8/diskroaster.8
+	gzip -f /usr/local/share/man/man8/diskroaster.8
 	mandb --quiet
 fi
 

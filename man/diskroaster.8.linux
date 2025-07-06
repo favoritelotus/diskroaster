@@ -1,4 +1,4 @@
-.TH DISKROASTER 1 "June 2025" "v1.1.0" "Multithreaded Disk Testing Utility"
+.TH DISKROASTER 8 "June 2025" "v1.1.0" "Multithreaded Disk Testing Utility"
 .SH NAME
 diskroaster \- multithreaded disk testing utility that writes and verifies data on a raw disk device
 .SH SYNOPSIS
