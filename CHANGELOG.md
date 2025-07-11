@@ -17,3 +17,7 @@
 ## [1.1.1] - 2025-07-01
 ### Fixed
 - Fixed calculation of verified bytes and percentage.
+
+## [1.2.0] - 2025-07-11
+### Added
+- Warning confirmation before disk write operation to prevent accidental data loss.

@@ -40,6 +40,7 @@
 #include <pthread.h>
 #include <signal.h>
 #include <errno.h>
+#include <termios.h>
 
 #if defined(__linux__)
 	#include <linux/fs.h>
@@ -48,7 +49,7 @@
 #endif
 
 #define PROGNAME "diskroaster"
-#define PROG_VERSION "1.1.1"
+#define PROG_VERSION "1.2.0"
 #define MIN_BLOCK_SIZE 512
 #define DEFAULT_BLOCK_SIZE 4096
 #define DEFAULT_NUM_WORKERS 4
@@ -91,6 +92,48 @@ void handle_sigint(int sig)
 	workers_run = 0;	
 	terminate = 1;
 } 
+
+int display_prompt(void)
+{
+	char ch;
+	int exit_program;
+
+	struct termios current_term;
+	struct termios new_term;
+
+	// Get current terminal settings and save them in new_term.	
+	tcgetattr(STDIN_FILENO, &current_term);      
+	new_term = current_term;
+
+	// Disable so-called canonical and input echo modes
+	new_term.c_lflag &= ~(ICANON | ECHO);
+
+	// Read at least one character without timeout.
+	new_term.c_cc[VMIN] = 1;
+	new_term.c_cc[VTIME] = 0; 
+             
+	tcsetattr(STDIN_FILENO, TCSANOW, &new_term);
+
+	fprintf(stderr, "WARNING: All data on the target disk will be destroyed!\nContinue? (y/n):");
+    
+	while (1) {
+		ch = getchar();
+
+		if (ch == 'y' || ch == 'Y') {
+			exit_program =	0;
+			break;
+		} else if (ch == 'n' || ch == 'N') {
+			exit_program = 1;
+			break;
+		}
+	}
+	
+	// Restore terminal settings.
+	tcsetattr(STDIN_FILENO, TCSANOW, &current_term);
+	fprintf(stderr,"%c\n", ch);
+	
+	return exit_program;
+}
 
 void cleanup_resources(void)
 {
@@ -370,6 +413,9 @@ int main(int argc, char **argv)
 				sector_size);
 		exit(EXIT_FAILURE);
 	}
+
+	if (display_prompt())
+		exit(EXIT_SUCCESS);
 
 	if (posix_memalign((void**)&wr_data, sector_size, blocksize)  != 0) {
 		fprintf(stderr, "%s\n", "No free memory to allocate.");
