@@ -27,6 +27,9 @@ Supports \fBk\fR or \fBm\fR suffixes (e.g., 64k, 1m, 32m).
 .TP
 .B \-z
 Write zero-filled blocks instead of random data.
+.TP
+.B \-y
+Skip confirmation prompt and start immediately.
 
 .SH EXAMPLES
 Run 8 parallel workers, writing 32MB zero-filled blocks to \fB/dev/ada1\fR and verifying them:

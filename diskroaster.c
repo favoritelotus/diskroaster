@@ -49,7 +49,7 @@
 #endif
 
 #define PROGNAME "diskroaster"
-#define PROG_VERSION "1.2.0"
+#define PROG_VERSION "1.3.0"
 #define MIN_BLOCK_SIZE 512
 #define DEFAULT_BLOCK_SIZE 4096
 #define DEFAULT_NUM_WORKERS 4
@@ -77,6 +77,7 @@ int pass;
 int terminate;
 int write_zeros;
 int sector_size;
+int skip_prompt;
 volatile int workers_run;
 
 char *device_name = NULL;
@@ -160,8 +161,10 @@ void usage(void)
 		"  -h			- Print help and exit\n"
 		"  -w <workers>		- Number of parallel worker threads (default: 4)\n"
 		"  -n <passes>		- Number of write+verify passes to perform (default: 1)\n"
-		"  -b <blocksize>	- Block size for write operations (default: 4096).\n" 
+		"  -b <blocksize>	- Block size for write operations (default: 4096)\n" 
 		"			  Supports k and m suffixes (e.g., 64k, 1m, 32m)\n"
+		"  -y			- Skip confirmation prompt and start immediately\n"
+		"			  This will destroy all data on the target disk\n"						
 		"  -z			- Write zero-filled blocks instead of random data\n";
 
 	fprintf(stderr, "%s", usage);
@@ -335,6 +338,48 @@ void *worker(void *worker_params)
 
 }
 
+void get_eta(char *eta, off_t verified_bytes, off_t disk_size)
+{
+        static off_t verified_bytes_prev = 0;
+        off_t bps;
+	static double avg_bps = 0;
+        off_t bytes_left;
+        long eta_secs;
+	int hours;
+	int minutes;
+	int seconds;
+
+	if (verified_bytes == 0) {
+		eta_secs = 0;
+	} else if (verified_bytes_prev == 0) {
+		verified_bytes_prev = verified_bytes;
+		eta_secs = 0;
+	} else {
+        	bps = verified_bytes - verified_bytes_prev;
+
+		if (bps > 0) {
+			// Smooth a bit bytes/s to make ETA less jumpy.
+			avg_bps = (avg_bps == 0)? bps: avg_bps * 0.7 + bps * 0.3;
+		}
+
+        	bytes_left = disk_size - verified_bytes;
+		eta_secs = (avg_bps > 0) ? (bytes_left / avg_bps) : 0;
+        	verified_bytes_prev = verified_bytes;
+	}
+
+	hours = eta_secs / 3600;
+	minutes = (eta_secs / 60) % 60;
+
+	if (hours > 0)
+        	sprintf(eta, "%dh %dm", hours, minutes);
+    	else {
+		seconds = eta_secs % 60;
+        	sprintf(eta, "%dm %ds", minutes, seconds);
+	}
+
+        return;
+}
+
 int main(int argc, char **argv)
 {
 
@@ -346,11 +391,12 @@ int main(int argc, char **argv)
 	off_t offset;
 	off_t disk_size;
 	int remainder;
+	char eta[9];
 
 	struct stat st;
 	mode_t device_type;
 
-	while ((opt = getopt(argc, argv, "b:w:n:zh")) != -1) {
+	while ((opt = getopt(argc, argv, "b:w:n:zhy")) != -1) {
 
 		switch (opt) {
 			case 'b':
@@ -373,8 +419,10 @@ int main(int argc, char **argv)
 				break;
                         case 'z':
 				write_zeros = 1;
+				break;
+			case 'y':
+				skip_prompt = 1;
 				break;	
-
 			case 'h': 
 			case '?':
 			default:
@@ -414,7 +462,7 @@ int main(int argc, char **argv)
 		exit(EXIT_FAILURE);
 	}
 
-	if (display_prompt())
+	if (!skip_prompt && display_prompt())
 		exit(EXIT_SUCCESS);
 
 	if (posix_memalign((void**)&wr_data, sector_size, blocksize)  != 0) {
@@ -495,11 +543,14 @@ int main(int argc, char **argv)
 		}
 
 		while (workers_run) {
-                        fprintf(stderr, "\033[2K\rpass: %d/%d, verified: %ld MB, completed: %ld%%\r",
+			get_eta(eta, verified_bytes, disk_size);
+
+                        fprintf(stderr, "\033[2K\rpass: %d/%d, verified: %ld MB, completed: %ld%%, ETA: %s\r",
                                         pass, 
                                         num_passes, 
                                         (verified_bytes / 1024 / 1024),
-                                        (verified_bytes * 100) / disk_size);
+                                        (verified_bytes * 100) / disk_size,
+					eta);
 			sleep(1);
 		}
 

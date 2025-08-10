@@ -21,3 +21,9 @@
 ## [1.2.0] - 2025-07-11
 ### Added
 - Warning confirmation before disk write operation to prevent accidental data loss.
+
+## [1.3.0] - 2025-08-10
+### Added
+- ETA (Estimated Time of Arrival).
+- 'y' option to skip warning confirmation prompt.
+
