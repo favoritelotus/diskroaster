@@ -55,8 +55,11 @@ Building
 To build and install:
 
 `git clone https://github.com/favoritelotus/diskroaster.git`
+
 `cd diskroaster`
+
 `make`
+
 `make install`
 
 By default, it installs to `/usr/local`. To use a custom installation path, specify the `PREFIX` environment variable:
