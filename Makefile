@@ -1,5 +1,5 @@
 CC ?= cc
-CFLAGS = -g -O0 -Wall -Wextra
+CFLAGS += -Wall -Wextra -pthread
 PREFIX ?= /usr/local
 BINDIR = $(PREFIX)/bin
 
