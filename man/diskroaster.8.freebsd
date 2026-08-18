@@ -1,4 +1,4 @@
-.TH DISKROASTER 8 "June 2025" "v1.1.0" "Multithreaded Disk Testing Utility"
+.TH DISKROASTER 8 "August 2026" "v1.4.0" "Multithreaded Disk Testing Utility"
 .SH NAME
 diskroaster \- multithreaded disk testing utility that writes and verifies data on a raw disk device
 .SH SYNOPSIS
@@ -22,7 +22,7 @@ Number of parallel worker threads. Default: 4.
 Number of write+verify passes to perform. Default: 1.
 .TP
 .B \-b \fI<blocksize>\fR
-Block size for write operations. Default: 4096 bytes.  
+Block size for write operations. Default: 4096 bytes.
 Supports \fBk\fR or \fBm\fR suffixes (e.g., 64k, 1m, 32m).
 .TP
 .B \-z
@@ -45,7 +45,7 @@ This tool overwrites all data on the specified disk.
 .IP \[bu] 2
 Be absolutely sure the target (e.g., \fB/dev/ada1\fR) is not your system disk or a mounted volume.
 .IP \[bu] 2
-diskroaster allocates one memory buffer per worker thread.  
+diskroaster allocates one memory buffer per worker thread.
 Total memory usage is approximately:
 .RS
 \fImemory_used = num_workers × block_size\fR

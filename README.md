@@ -26,12 +26,12 @@ This runs 8 parallel workers, writes 32MB blocks of zeros to /dev/sdd, and verif
 Options
 -------
 ```
-  -h              Print help and exit  
-  -w <workers>    Number of parallel worker threads (default: 4)  
-  -n <passes>     Number of write+verify passes to perform (default: 1)  
-  -b <blocksize>  Block size for write operations (default: 4096)    
-                  Supports k or m suffixes (e.g., 64k, 1m, 32m)  
-  -z              Write zero-filled blocks instead of random data  
+  -h              Print help and exit
+  -w <workers>    Number of parallel worker threads (default: 4)
+  -n <passes>     Number of write+verify passes to perform (default: 1)
+  -b <blocksize>  Block size for write operations (default: 4096)
+                  Supports k or m suffixes (e.g., 64k, 1m, 32m)
+  -z              Write zero-filled blocks instead of random data
 ```
 Warnings
 --------
@@ -39,7 +39,7 @@ Warnings
 - This tool overwrites all data on the specified disk!
 - Be absolutely sure the target (e.g., /dev/sdd) is not your system or a mounted disk.
 - diskroaster allocates one memory buffer per worker thread.  Total memory usage is approximately:
-`memory_used = num_workers × block_size`.
+`memory_used = num_workers x block_size`.
 Using a large number of workers with a large block size can lead to high memory consumption and potentially cause the system to run out of memory (OOM).
 Ensure your system has enough free RAM before running with aggressive settings like `-w 64 -b 64m`.
 - You must run this as root to access raw devices.
@@ -52,15 +52,20 @@ Each worker writes to its own section of the disk. After writing, it reads back 
 Building
 --------
 
-To build and install:  
-`git clone https://github.com/favoritelotus/diskroaster.git`  
-`cd diskroaster`   
-`make`  
+To build and install:
+
+`git clone https://github.com/favoritelotus/diskroaster.git`
+`cd diskroaster`
+`make`
 `make install`
+
+By default, it installs to `/usr/local`. To use a custom installation path, specify the `PREFIX` environment variable:
+
+`PREFIX=/my/custom/prefix make install`
 
 Tested on Linux and FreeBSD using standard POSIX make.
 
 Author
 ------
 
-Pavel Golubinskiy  
+Pavel Golubinskiy

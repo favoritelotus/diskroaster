@@ -27,3 +27,17 @@
 - ETA (Estimated Time of Arrival).
 - 'y' option to skip warning confirmation prompt.
 
+## [1.4.0] - 2026-08-18
+### Changed
+- Huge code refactoring: split the monolithic `diskroaster.c` into separate modules (`main.c`, `disk.c`, `workers.c`, `utils.c`) to improve maintainability and extensibility.
+- Improved build system with a modular Makefile compatible with both BSD and GNU make.
+
+### Added
+- Robust thread-safe POSIX error handling using `strerror_r` in workers.
+- Proper handling and verification of `pthread_mutex_lock` and `pthread_mutex_unlock` return status codes.
+- Immediate caching of `errno` to prevent race conditions during heavy parallel raw disk I/O.
+- Strict error handling and input validation for the arguments parser (`-w` and `-n` options).
+
+### Fixed
+- Potential thread-safety issues and race conditions.
+
