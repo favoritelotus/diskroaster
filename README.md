@@ -31,6 +31,7 @@ Options
   -n <passes>     Number of write+verify passes to perform (default: 1)
   -b <blocksize>  Block size for write operations (default: 4096)
                   Supports k or m suffixes (e.g., 64k, 1m, 32m)
+  -y              Skip confirmation prompt and start immediately
   -z              Write zero-filled blocks instead of random data
 ```
 Warnings
@@ -49,24 +50,41 @@ Output & Verification
 
 Each worker writes to its own section of the disk. After writing, it reads back the data and verifies correctness block by block. Any mismatch or error will be reported.
 
-Building
+Building and Installation
 --------
 
-To build and install:
+* FreeBSD (Recommended)
+  
+  The easiest way to install on FreeBSD is via the official ports collection:
+  
+  Install as a binary package:
+  
+  `pkg install sysutils/diskroaster`
 
-`git clone https://github.com/favoritelotus/diskroaster.git`
+  Or build from source:
+  
+  `cd /usr/ports/sysutils/diskroaster/`
 
-`cd diskroaster`
+  `make install clean`
 
-`make`
+* Linux / Generic Unix
 
-`make install`
+  Clone repository:
 
-By default, it installs to `/usr/local`. To use a custom installation path, specify the `PREFIX` environment variable:
+  `git clone https://github.com/favoritelotus/diskroaster.git`
 
-`PREFIX=/my/custom/prefix make install`
+  `cd diskroaster`
 
-Tested on Linux and FreeBSD using standard POSIX make.
+  Build and install:
+     
+   `make`
+
+   `make install`
+
+  By default, it installs to `/usr/local`. To use a custom installation path, specify the `PREFIX` environment variable:
+
+  `PREFIX=/my/custom/prefix make install`
+
 
 Author
 ------
