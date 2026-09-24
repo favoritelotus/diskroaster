@@ -1,7 +1,12 @@
 diskroaster
 =========
 
-diskroaster is a multithreaded disk testing utility that writes and verifies data on a raw disk device. It is designed to stress-test hard drives and SSDs by dividing the disk into sections, writing data in parallel using multiple worker threads, and verifying the written content for integrity.
+`diskroaster` is a multithreaded disk testing utility that writes and verifies data on a raw disk device. It is designed to stress-test hard drives and SSDs by dividing the disk into sections, writing data in parallel using multiple worker threads, and verifying the written content for integrity.
+
+Origin
+------
+
+`diskroaster` was written to test large batches of raw disks before putting them into production storage. I needed a fast, simple tool for stress-testing drives without the overhead of `fio`. It was used to validate 160 brand new, third-party 18TB SATA drives before migrating a Panasas ActivStor cluster, catching defects before installation.
 
 Features
 --------
